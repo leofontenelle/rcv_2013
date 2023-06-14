@@ -19,18 +19,15 @@ pns2013_lab <- read.csv2("pns2013_exames_2023-05-05.csv",
                          na.strings = "", fileEncoding = "UTF-8")
 
 d <- with(pns2013_lab, data.frame(
-  gender = factor(Z001, labels = c("Male", "Female")),
+  sex = Z001 - 1,
   age_years = Z002,
-  race = Z003 |> 
-    factor(labels = c("white", "black", "white", "black", "white", NA)),
-  smoke_current = factor(P050, labels = c("yes", "yes", "no")),
+  race = ifelse(Z003 <= 5, Z003, NA),
+  smoke_current = as.integer(P050 %in% 1:2),
   chol_total_mgdl = Z031,
-  chol_total_mmoll = Z031 * 10 / 386.65354,
   chol_hdl_mgdl = Z032,
-  bp_sys_mmHg = W00407,
-  bp_meds = factor(Q060, labels = c("yes", "no")),
-  diabetes = diagnose_diabetes(Q029, Q030, Z034) |> 
-    factor(labels = c("no", "yes")),
+  bp_sys_mmhg = W00407,
+  bp_meds = impute_bp_meds(Q001, Q002, Q006),
+  diabetes = diagnose_diabetes(Q029, Q030, Z034),
   survey_weight = peso_lab
 ))
 
