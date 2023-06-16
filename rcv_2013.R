@@ -85,3 +85,21 @@ d$globorisk <- with(d, globorisk(
   type = "risk",
   updated_lac = TRUE
 ))
+
+# Framingham: 30 to 74
+# Pooled Cohort Equations: 40 to 79
+# Globorisk LAC: 40 to 74
+d$age_cat <- 
+  cut(d$age_years, breaks = c(0, 40, 75, Inf), 
+      labels = c("low", "ok", "high"), right = FALSE)
+# only in Globorisk
+d$bp_sys_cat <- 
+  cut(d$bp_sys_mmhg, breaks = c(0, 70, 270, Inf), 
+      labels = c("low", "ok", "high"), right = FALSE)
+d$chol_total_cat <- 
+  cut(d$chol_total_mgdl,breaks = c(0, 67.77, 773.3, Inf), 
+      labels = c("low", "ok", "high"), right = FALSE)
+
+d$ok <- !d$cvd & 
+  d$age_cat == "ok" & d$bp_sys_cat == "ok" & d$chol_total_cat == "ok" &
+  !is.na(d$framingham) & !is.na(d$pooled_cohort) & !is.na(d$globorisk)
