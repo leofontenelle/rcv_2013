@@ -1,5 +1,13 @@
 source("functions.R")
 
+# between() ----
+
+df_b <- list(x = rnorm(100), left = rnorm(1), right = rnorm(1))
+stopifnot(all(identical(
+  between(df_b$x, df_b$left, df_b$right),
+  df_b$x >= df_b$left & df_b$x <= df_b$right
+)))
+
 # diagnose_diabetes() ----
 
 df_dd <- expand.grid(Q029 = c(1:6, NA), 

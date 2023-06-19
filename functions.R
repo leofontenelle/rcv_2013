@@ -1,3 +1,7 @@
+between <- function(x, left, right) {
+  x >= left & x <= right
+}
+
 diagnose_diabetes <- function(Q029, Q030, Z034) {
   stopifnot(length(Q029) == length(Q030), length(Q030) == length(Z034))
   

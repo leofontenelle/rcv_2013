@@ -39,9 +39,20 @@ rm(pns2013_lab)
 
 # Estimate CDV risk ----
 
-# This function returns risk as a percentage, while the other two
+# Framingham: 30 to 74
+# Pooled Cohort Equations: 40 to 79
+# Globorisk LAC: 40 to 74
+d$ok_age <- d$age_years |> between(40, 74)
+d$ok_complete <- complete.cases(d)
+d$ok_nocvd <- !d$cvd
+d$ok_notatypical <- # only in Globorisk
+  between(d$bp_sys_mmhg, 70, 270) & 
+  between(d$chol_total_mgdl, 67.77, 773.3)
+d$ok <- d$ok_age & d$ok_complete & d$ok_nocvd & d$ok_notatypical
+
+# ascvd_10y_frs() returns risk as a percentage, while the other two
 # return risk as a proportion.
-d$framingham <- with(d, ascvd_10y_frs(
+d$framingham[d$ok] <- with(subset(d, ok), ascvd_10y_frs(
   gender = ifelse(sex == 0, "male", "female"),
   age = age_years,
   hdl = chol_hdl_mgdl,
@@ -52,7 +63,7 @@ d$framingham <- with(d, ascvd_10y_frs(
   diabetes = diabetes
 ) / 100)
 
-d$pooled_cohort <- with(d, predict_10yr_ascvd_risk(
+d$pooled_cohort[d$ok] <- with(subset(d, ok), predict_10yr_ascvd_risk(
   age_years = age_years,
   race = race,
   sex = sex,
@@ -71,7 +82,7 @@ d$pooled_cohort <- with(d, predict_10yr_ascvd_risk(
   diabetes_levels = list(no = 0, yes = 1)
 ))
 
-d$globorisk <- with(d, globorisk(
+d$globorisk[d$ok] <- with(subset(d, ok), globorisk(
   sex = sex,
   # globorisk always throws an error when the age is lower than 40
   age = ifelse(age_years >= 40, age_years, NA_integer_),
@@ -86,20 +97,6 @@ d$globorisk <- with(d, globorisk(
   updated_lac = TRUE
 ))
 
-# Framingham: 30 to 74
-# Pooled Cohort Equations: 40 to 79
-# Globorisk LAC: 40 to 74
-d$age_cat <- 
-  cut(d$age_years, breaks = c(0, 40, 75, Inf), 
-      labels = c("low", "ok", "high"), right = FALSE)
-# only in Globorisk
-d$bp_sys_cat <- 
-  cut(d$bp_sys_mmhg, breaks = c(0, 70, 270, Inf), 
-      labels = c("low", "ok", "high"), right = FALSE)
-d$chol_total_cat <- 
-  cut(d$chol_total_mgdl,breaks = c(0, 67.77, 773.3, Inf), 
-      labels = c("low", "ok", "high"), right = FALSE)
-
-d$ok <- !d$cvd & 
-  d$age_cat == "ok" & d$bp_sys_cat == "ok" & d$chol_total_cat == "ok" &
-  !is.na(d$framingham) & !is.na(d$pooled_cohort) & !is.na(d$globorisk)
+stopifnot(with(subset(d, ok), all(
+  !is.na(framingham) & !is.na(pooled_cohort) & !is.na(globorisk)
+)))
