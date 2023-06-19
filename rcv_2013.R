@@ -100,3 +100,45 @@ d$globorisk[d$ok] <- with(subset(d, ok), globorisk(
 stopifnot(with(subset(d, ok), all(
   !is.na(framingham) & !is.na(pooled_cohort) & !is.na(globorisk)
 )))
+
+
+# Describe sample ----
+
+sample_size <- list(
+  n_total = nrow(d),
+  # prop_total is 1.0 or 100%
+  n_age = sum(d$ok_age),
+  prop_age = weighted.mean(d$ok_age, d$survey_weight),
+  n_complete = d |> 
+    with(sum(ok_age & ok_complete)),
+  prop_complete = d |> 
+    with(weighted.mean(ok_age & ok_complete, survey_weight)),
+  n_nocvd = d |> 
+    with(sum(ok_age & ok_complete & ok_nocvd)),
+  prop_nocvd = d |> 
+    with(weighted.mean(ok_age & ok_complete & ok_nocvd, survey_weight)),
+  # d$ok <- d$ok_age & d$ok_complete & d$ok_nocvd & d$ok_notatypical
+  n_ok = sum(d$ok),
+  prop_ok = weighted.mean(d$ok, d$survey_weight)
+)
+
+sample_descr <- with(subset(d, ok), list(
+  n_female = sum(sex),
+  prop_female = weighted.mean(sex, survey_weight),
+  mean_age = weighted.mean(age_years, survey_weight),
+  sd_age = weighted.sd(age_years, survey_weight),
+  n_black = sum(race %in% c(2, 4)),
+  prop_black = weighted.mean(race %in% c(2, 4), survey_weight),
+  n_smoke = sum(smoke_current),
+  prop_smoke = weighted.mean(smoke_current, survey_weight),
+  mean_chol_total = weighted.mean(chol_total_mgdl, survey_weight),
+  sd_chol_total = weighted.sd(chol_total_mgdl, survey_weight),
+  mean_chol_hdl = weighted.mean(chol_hdl_mgdl, survey_weight),
+  sd_chol_hdl = weighted.sd(chol_hdl_mgdl, survey_weight),
+  mean_bp = weighted.mean(bp_sys_mmhg, survey_weight),
+  sd_bp = weighted.sd(bp_sys_mmhg, survey_weight),
+  n_bp_meds = sum(bp_meds),
+  prop_bp_meds = weighted.mean(bp_meds, survey_weight),
+  n_diabetes = sum(diabetes),
+  prop_diabetes = weighted.mean(diabetes, survey_weight)
+))

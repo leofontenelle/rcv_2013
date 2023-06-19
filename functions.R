@@ -41,3 +41,13 @@ impute_bp_meds <- function(Q001, Q002, Q006) {
   
   return(res)
 }
+
+weighted.var <- function(x, w) {
+  # Implementation rom MSWD_w in:
+  # https://en.wikipedia.org/wiki/Reduced_chi-squared_statistic
+  # Also see:
+  # https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Frequency_weights
+  sum(w * (x - weighted.mean(x, w))^2) * sum(w) / (sum(w)^2 - sum(w^2))
+}
+
+weighted.sd <- function(x, w) sqrt(weighted.var(x, w))
