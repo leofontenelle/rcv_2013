@@ -142,3 +142,11 @@ sample_descr <- with(subset(d, ok), list(
   n_diabetes = sum(diabetes),
   prop_diabetes = weighted.mean(diabetes, survey_weight)
 ))
+
+risk_descr <- (\(d, w) {
+  cbind(
+   t(sapply(d, weighted.quantile, w = w, probs = c(0, 0.25, 0.5, 0.75, 1.0))),
+   mean = sapply(d, weighted.mean, w = w),
+   sd = sapply(d, weighted.sd, w = w)
+)}) (d[d$ok, c("framingham", "pooled_cohort", "globorisk")], 
+     d$survey_weight[d$ok])

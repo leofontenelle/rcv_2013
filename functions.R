@@ -42,6 +42,37 @@ impute_bp_meds <- function(Q001, Q002, Q006) {
   return(res)
 }
 
+# Function reused from: https://doi.org/10.5281/zenodo.7121199
+weighted.quantile <- function(x, w = 1, probs = seq(0, 1, 0.25),
+                              na.rm = FALSE, names = TRUE) {
+  
+  if (any(probs > 1) | any(probs < 0)) stop("'probs' outside [0,1]")
+  
+  if (length(w) == 1) w <- rep(w, length(x))
+  if (length(w) != length(x)) stop("w must have length 1 or be as long as x")
+  
+  if (isTRUE(na.rm)) {
+    w <- x[!is.na(x)]
+    x <- x[!is.na(x)]
+  }
+  
+  w <- w[order(x)] / sum(w)
+  x <- x[order(x)]
+  
+  if (length(x) == 1) {
+    res <- rep(x, length(probs))
+  } else {
+    cum_w <- cumsum(w) - w * (1 - (seq_along(w) - 1) / (length(w) - 1))
+    res <- approx(x = cum_w, y = x, xout = probs, ties = "ordered")$y
+  }
+  # Accessing non-exported functions is not great practice, generally,
+  # but we want to ensure the labels are identical to those of
+  # non-weighted quantiles.
+  if (isTRUE(names)) names(res) <- stats:::format_perc(probs, "%")
+  
+  res
+}
+
 weighted.var <- function(x, w) {
   # Implementation rom MSWD_w in:
   # https://en.wikipedia.org/wiki/Reduced_chi-squared_statistic

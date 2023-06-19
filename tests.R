@@ -46,3 +46,21 @@ stopifnot(with(df_ibm, identical(
   impute_bp_meds(Q001, Q002, Q006), 
   bp_meds
 )))
+
+# weighted.quantile() ----
+
+# Tests reused from: https://doi.org/10.5281/zenodo.7121199
+local({
+  x <- rnorm(100)
+  stopifnot(isTRUE(all.equal(weighted.quantile(x, w = 1), quantile(x))))
+})
+local({
+  # Example from man('weighted.mean')
+  x <- c(3.7, 3.3, 3.5, 2.8)
+  w <- c(5,   5,   4,   1)/15
+  stopifnot(isTRUE(all.equal(
+    weighted.quantile(x, w, 0:4/4, names = FALSE),
+    c(2.8, 3.33611111111111, 3.46111111111111, 3.58157894736842,
+      3.7)
+  )))
+})
