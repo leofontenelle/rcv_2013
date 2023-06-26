@@ -101,6 +101,14 @@ stopifnot(with(subset(d, ok), all(
   !is.na(framingham) & !is.na(pooled_cohort) & !is.na(globorisk)
 )))
 
+for (score in c("framingham", "pooled_cohort", "globorisk")) {
+  new_name <- sprintf("%s_cat", score)
+  d[[new_name]] <- d[[score]] |> 
+    cut(breaks = c(0, 0.1, 0.2, Inf), 
+        labels = c("Low", "Intermediate", "High"),
+        right = FALSE, ordered_results = TRUE)
+}
+
 
 # Describe sample ----
 
