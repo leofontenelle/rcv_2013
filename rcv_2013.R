@@ -158,3 +158,17 @@ risk_descr <- (\(d, w) {
    sd = sapply(d, weighted.sd, w = w)
 )}) (d[d$ok, c("framingham", "pooled_cohort", "globorisk")], 
      d$survey_weight[d$ok])
+
+risk_cat_descr <- with(subset(d, ok), {
+  res <- list("Framingham" = framingham_cat, 
+              "Pooled Cohorts Equation" = pooled_cohort_cat, 
+              "Globorisk" = globorisk_cat) |> 
+    lapply(\(x) data.frame(
+      level = levels(x),
+      n = tapply(survey_weight, x, length),
+      prop = tapply(survey_weight, x, sum) / sum(survey_weight)
+    ))
+  for (nm in names(res)) res[[nm]] <- cbind(score = nm, res[[nm]])
+  res <- do.call(rbind.data.frame, c(res, make.row.names = FALSE))
+  res
+})
