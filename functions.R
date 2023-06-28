@@ -42,7 +42,7 @@ impute_bp_meds <- function(Q001, Q002, Q006) {
   return(res)
 }
 
-# Function reused from: https://doi.org/10.5281/zenodo.7121199
+# Function improved from: https://doi.org/10.5281/zenodo.7121199
 weighted.quantile <- function(x, w = 1, probs = seq(0, 1, 0.25),
                               na.rm = FALSE, names = TRUE) {
   
@@ -51,9 +51,18 @@ weighted.quantile <- function(x, w = 1, probs = seq(0, 1, 0.25),
   if (length(w) == 1) w <- rep(w, length(x))
   if (length(w) != length(x)) stop("w must have length 1 or be as long as x")
   
+  not.missing <- !is.na(w) & !is.na(x)
   if (isTRUE(na.rm)) {
-    w <- x[!is.na(x)]
-    x <- x[!is.na(x)]
+    if (!identical(is.na(x), is.na(w))) warning(paste(
+      "One or more observations with missing x but not missing w",
+      "or vice-versa! Using only observations with non-missing values",
+      "for both."
+    ))
+    w <- w[not.missing]
+    x <- x[not.missing]
+  } else if (any(is.na(x) | is.na(w))) {
+    warning("One or more missing values in x or w.")
+    return(rep(NA_real_, length(x)))
   }
   
   w <- w[order(x)] / sum(w)
