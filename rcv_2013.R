@@ -37,7 +37,7 @@ d <- with(pns2013_lab, data.frame(
 rm(pns2013_lab)
 
 
-# Estimate CDV risk ----
+# Estimate CVD risk ----
 
 # Framingham: 30 to 74
 # Pooled Cohort Equations: 40 to 79
@@ -172,3 +172,39 @@ risk_cat_descr <- with(subset(d, ok), {
   res <- do.call(rbind.data.frame, c(res, make.row.names = FALSE))
   res
 })
+
+# Compare estimates ----
+
+d$ratio_fg <- d$framingham / d$globorisk
+d$ratio_fp <- d$framingham / d$pooled_cohort
+d$ratio_pg <- d$pooled_cohort / d$globorisk
+
+agree_cont <- data.frame(
+  A = c("Framingham", "Framingham", "PCE"),
+  B = c("Globorisk", "PCE", "Globorisk"),
+  A_lower = with(subset(d, ok), 
+                 sapply(list(ratio_fg, ratio_fp, ratio_pg), 
+                        \(x) weighted.mean(x < (1/1.25), survey_weight))),
+  Agreement = with(subset(d, ok), 
+                   sapply(list(ratio_fg, ratio_fp, ratio_pg), 
+                          \(x) between(x, 1/1.25, 1.25) |> 
+                            weighted.mean(survey_weight))),
+  A_higher = with(subset(d, ok), 
+                  sapply(list(ratio_fg, ratio_fp, ratio_pg), 
+                         \(x) weighted.mean(x > 1.25, survey_weight)))
+)
+
+agree_cat <-  data.frame(
+  A = c("Framingham", "Framingham", "PCE"),
+  B = c("Globorisk", "PCE", "Globorisk"),
+  pa = with(subset(d, ok), 
+            list(framingham_cat == globorisk_cat,
+                 framingham_cat == pooled_cohort_cat,
+                 pooled_cohort_cat == globorisk_cat) |> 
+              sapply(weighted.mean, survey_weight)),
+  ac1 = with(subset(d, ok), c(
+    weighted.ac1(framingham_cat, globorisk_cat, survey_weight),
+    weighted.ac1(framingham_cat, pooled_cohort_cat, survey_weight),
+    weighted.ac1(pooled_cohort_cat, globorisk_cat, survey_weight)
+  ))
+)
