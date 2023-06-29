@@ -82,6 +82,49 @@ weighted.quantile <- function(x, w = 1, probs = seq(0, 1, 0.25),
   res
 }
 
+
+#' Gwet's generalized first-order agreement coefficient (AC1) 
+#' but with survey weights
+#'
+#' @param a assessment of the first rater
+#' @param b assessment of the second rater
+#' @param w survey weights
+#'
+#' @return Gwet's AC1
+#'
+weighted.ac1 <- function(a, b, w = 1) {
+  
+  stopifnot(length(a) == length(b))
+  if (length(w) == 1) w <- rep(w, length(a))
+  stopifnot(length(a) == length(w))
+  
+  ok <- !is.na(a) & !is.na(b) & !is.na(w)
+  if (any(!ok)) {
+    warning("Removing observations with missing values")
+    a <- a[ok]
+    b <- b[ok]
+    w <- w[ok]
+  }
+  
+  if (is.factor(a) & is.factor(b)) {
+    stopifnot(levels(a) == levels(b))
+    ll <- levels(a)
+  } else {
+    stopifnot(is.factor(a) == is.factor(b))
+    ll <- unique(c(a, b))
+  }
+  
+  # Observed agreement
+  pa <- weighted.mean(a == b, w)
+  # Expected chance agreement by category
+  pihat_k <- sapply(ll, \(x) weighted.mean(((a==x) + (b==x)) / 2, w))
+  # Overall expected chance agreement
+  pe <- sum(pihat_k * (1 - pihat_k)) / (length(ll) - 1)
+  
+  (pa - pe) / (1 - pe)
+}
+
+
 weighted.var <- function(x, w) {
   # Implementation rom MSWD_w in:
   # https://en.wikipedia.org/wiki/Reduced_chi-squared_statistic

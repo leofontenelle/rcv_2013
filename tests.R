@@ -47,6 +47,31 @@ stopifnot(with(df_ibm, identical(
   bp_meds
 )))
 
+
+# weighted.ac1() ----
+
+df_wac1_bg <- irrCAC::cac.ben.gerry
+# One missing value is "" and somehow made it into the levels list
+df_wac1_bg$Gerry <- factor(df_wac1_bg$Gerry, levels = letters[1:5])
+df_wac1_bg <- df_wac1_bg[complete.cases(df_wac1_bg), ]
+stopifnot(identical(
+  # Gwet's AC1 is rounded to the 5th digit
+  round(weighted.ac1(df_wac1_bg$Ben, df_wac1_bg$Gerry), 5),
+  irrCAC::gwet.ac1.raw(df_wac1_bg[, c("Ben", "Gerry")])$est$coeff.val
+))
+
+df_wac1_g1g2 <- irrCAC::cac.raw.g1g2
+for (column in paste0("Rater", 1:4)) {
+  df_wac1_g1g2[[column]] <- as.character(df_wac1_g1g2[[column]])
+  missing <- !(df_wac1_g1g2[[column]] %in% letters)
+  df_wac1_g1g2[[column]][missing] <- NA_character_
+}
+stopifnot(with(
+  subset(df_wac1_g1g2, complete.cases(Rater3, Rater4)),
+  identical(round(weighted.ac1(Rater3, Rater4), 5),
+            irrCAC::gwet.ac1.raw(cbind(Rater3, Rater4))$est$coeff.val)))
+
+
 # weighted.quantile() ----
 
 # Tests reused from: https://doi.org/10.5281/zenodo.7121199
