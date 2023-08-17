@@ -80,7 +80,7 @@ local({
   stopifnot(isTRUE(all.equal(weighted.quantile(x, w = 1), quantile(x))))
 })
 local({
-  # Example from man('weighted.mean')
+  # From example('weighted.mean')
   x <- c(3.7, 3.3, 3.5, 2.8)
   w <- c(5,   5,   4,   1)/15
   stopifnot(isTRUE(all.equal(
