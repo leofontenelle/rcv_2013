@@ -5,8 +5,8 @@
 # Load packages and functions ----
 
 # https://github.com/boyercb/globorisk
-load("sysdata.rda") # coefs, cvdr, rf
-source("globorisk.R")
+load("contrib/sysdata.rda") # coefs, cvdr, rf
+source("contrib/globorisk.R")
 
 library(PooledCohort)
 library(CVrisk)
@@ -17,7 +17,7 @@ source("functions.R")
 # Read data ----
 
 # https://www.pns.icict.fiocruz.br/bases-de-dados/
-pns2013_lab <- read.csv2("pns2013_exames_2023-05-05.csv", 
+pns2013_lab <- read.csv2("data/pns2013_exames_2023-05-05.csv", 
                          na.strings = "", fileEncoding = "UTF-8")
 
 d <- with(pns2013_lab, data.frame(
@@ -30,7 +30,7 @@ d <- with(pns2013_lab, data.frame(
   bp_sys_mmhg = W00407,
   bp_meds = impute_bp_meds(Q001, Q002, Q006),
   diabetes = diagnose_diabetes(Q029, Q030, Z034),
-  cvd = Q063 == 1 | Q068 == 1, # cardiac heart disease or stroke
+  cvd = Q063 == 1 | Q068 == 1, # cardiac disease or stroke
   survey_weight = peso_lab
 ))
 
@@ -39,9 +39,9 @@ rm(pns2013_lab)
 
 # Estimate CVD risk ----
 
-# Framingham: 30 to 74
-# Pooled Cohort Equations: 40 to 79
-# Globorisk LAC: 40 to 74
+# Framingham: 30 to 74 years of age
+# Pooled Cohort Equations: 40 to 79 years of age
+# Globorisk LAC: 40 to 74 years of age
 d$ok_age <- d$age_years |> between(40, 74)
 d$ok_complete <- complete.cases(d)
 d$ok_nocvd <- !d$cvd

@@ -1,0 +1,17 @@
+variable,name,values,comments
+Z001,sex,"1 = male, 2 = female",
+Z002,age,integer,years of age
+Z003,race,"1 = white, 2 = black, 3 = yellow (Eastern), 4 = brown (mixed race), 5 = Indigenous, 9 = Ignored",Brazilian Law 12990 says people with either black or brown skin are to be considered Black people
+P050,smoker,"1 = yes, daily, 2 = yes, less than daily, 3 = not currently",
+Z031,total cholesterol,integer,in mg/dL
+Z032,HDL cholesterol,integer,in mg/dL
+W00407,systolic blood pressure,real (increments of 0.5),"Mean of two measurements, in mmHg"
+Q001,time since blood pressure last measured,"1 = less than 6 mo, 2 = 6 to less than 12 mo, 3 = 1 to less than 2 y, 4 = 2 to less than 3 y, 5 = 3+ y, 6 = never",
+Q002,hypertension,"1 = yes, 2 = only during pregnancy, 3 = no",Medical diagnosis of hypertension; asked only if Q001 < 6
+Q006,BP medication,"1 = yes, 2 = no","Question if for the last 2 weeks, and is asked if Q002 is 1 or 2"
+Q029,time since glucemia measured,"1 = less than 6 mo, 2 = 6 to less than 12 mo, 3 = 1 to less than 2 y, 4 = 2 to less than 3 y, 5 = 3+ y, 6 = never",
+Q030,diabetes,"1 = yes, 2 = only during pregnancy, 3 = no",Medical diagnosis of diabetes; asked if Q029 < 6
+Z034,glycated hemoglobin,real,"Percentage, with ncrements of 0.01 percentage points"
+Q063,cardiac disease,"1 = yes, 2 = no","Prior medical diagnosis of heart disease such as infarction, angina, cardiac failure or other"
+Q068,stroke,"1 = yes, 2 = no",Medical diagnosis of stroke
+peso_lab,weight,real,"Survey weight for people participating in the laboratory measurements, with mean ~ 1.0"
