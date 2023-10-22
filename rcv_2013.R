@@ -106,7 +106,8 @@ for (score in c("framingham", "pooled_cohort", "globorisk")) {
   d[[new_name]] <- d[[score]] |> 
     cut(breaks = c(0, 0.1, 0.2, Inf), 
         labels = c("Low", "Intermediate", "High"),
-        right = FALSE, ordered_results = TRUE)
+        right = FALSE, ordered_results = TRUE) |> 
+    ordered() # somehow cut(..., ordered_results = TRUE) is not enough
 }
 
 
@@ -208,3 +209,79 @@ agree_cat <-  data.frame(
     weighted.ac1(pooled_cohort_cat, globorisk_cat, survey_weight)
   ))
 )
+
+# Tables and figures ----
+
+tab1 <- sample_descr |> 
+  with(data.frame(
+    Variable = c("Female", "Age (mean, SD)", "Black", "Smoker", 
+                 "Total cholesterol (mg/dL) (mean, SD)", 
+                 "HDL cholesterol (mg/dL) (mean, SD)",
+                 "Blood pressure (mean, SD)", "Using blood pressure medication",
+                 "Diabetes"),
+    n = c(n_female, mean_age, n_black, n_smoke, 
+          mean_chol_total, mean_chol_hdl, 
+          mean_bp, n_bp_meds, n_diabetes),
+    proportion = c(prop_female, sd_age, prop_black, prop_smoke, 
+                   sd_chol_total, sd_chol_hdl, 
+                   sd_bp, prop_bp_meds, prop_diabetes)))
+
+with(subset(d, ok), {
+  plot(NA, xlim = c(0, 1), ylim = c(0, 15), 
+       xlab = "Estimated cardiovascular risk", ylab = NA, yaxt = "n")
+  abline(v = 0.1, lty = 2, col = "gray")
+  abline(v = 0.2, lty = 2, col = "gray")
+  lines(density(framingham, bw = 0.05, from = 0, to = 1,
+                weights = survey_weight/sum(survey_weight)), col = 1)
+  lines(density(pooled_cohort, bw = 0.05, from = 0, to = 1,
+                weights = survey_weight/sum(survey_weight)), col = 2)
+  lines(density(globorisk, bw = 0.05, from = 0, to = 1,
+                weights = survey_weight/sum(survey_weight)), col = 3)
+  legend("topright", col = 1:3, lty = 1,
+         legend = c("Framingham", "Pooled Cohort Equations", "Globorisk"))
+})
+
+risk_cat_descr$prop |> 
+  matrix(nrow = 3, dimnames = list(unique(risk_cat_descr$level), 
+                                   unique(risk_cat_descr$score))) |> 
+  barplot()
+
+with(subset(d, ok), {
+  plot(NA, xlim = c(0.2, 5), ylim = c(0, 1), log = "x",
+       xlab = "Ratio between estimates", ylab = NA, yaxt = "n")
+  abline(v = 0.8, lty = 2, col = "gray")
+  abline(v = 1.25, lty = 2, col = "gray")
+  rect(0.8, -3, 1.25, 2, col = "lightgray", border = NA)
+  lines(density(ratio_fg, bw = 0.25, 
+                weights = survey_weight/sum(survey_weight)), col = 1)
+  lines(density(ratio_fp, bw = 0.25, 
+                weights = survey_weight/sum(survey_weight)), col = 2)
+  lines(density(ratio_pg, bw = 0.25, 
+                weights = survey_weight/sum(survey_weight)), col = 3)
+  legend("topright", col = 1:3, lty = 1,
+         legend = c("Framingham \uf7 Globorisk", 
+                    "Framingham \uf7 PCE", 
+                    "PCE \uf7 Globorisk"))
+})
+
+plot_categorical_agreement <- function(x, y, weight = 1, xlab = NULL, ylab = NULL) {
+  stopifnot(is.ordered(x), is.ordered(y))
+  stopifnot(length(x) == length(y))
+  if (length(weight) != length(x)) {
+    stop("weight must be missing, length 1, or as long as x and y")
+  } 
+  if (is.null(xlab)) warning("Label for X axis not informed")
+  if (is.null(ylab)) warning("Label for Y axis not informed")
+  
+  xy <- xtabs(weight ~ y + x)
+  totals <- colSums(xy)
+  barplot(height = xy / rep(totals, each = nrow(xy)), 
+          width = totals, 
+          xlab = xlab, ylab = ylab)
+}
+plot_categorical_agreement(d$globorisk_cat, d$framingham_cat, d$survey_weight, 
+                           "Globorisk", "Framingham")
+plot_categorical_agreement(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight, 
+                           "Pooled Cohort Equations", "Framingham")
+plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight, 
+                           "Globorisk", "Pooled Cohort Equations")
