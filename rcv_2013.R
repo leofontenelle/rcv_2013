@@ -285,3 +285,8 @@ plot_categorical_agreement(d$pooled_cohort_cat, d$framingham_cat, d$survey_weigh
                            "Pooled Cohort Equations", "Framingham")
 plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight, 
                            "Globorisk", "Pooled Cohort Equations")
+
+
+# Write output ----
+
+write.csv2(tab1, "tab1.csv", row.names = FALSE, fileEncoding = "UTF-8")
