@@ -215,6 +215,8 @@ agree_cat <-  data.frame(
 
 # Tables and figures ----
 
+## Table 1 ----
+
 tab1 <- sample_descr |> 
   with(data.frame(
     Variable = c("Female", "Age (mean, SD)", "Black", "Smoker", 
@@ -229,21 +231,33 @@ tab1 <- sample_descr |>
                    sd_chol_total, sd_chol_hdl, 
                    sd_bp, prop_bp_meds, prop_diabetes)))
 
-with(subset(d, ok), {
-  plot(NA, xlim = c(0, 1), ylim = c(0, 15), 
-       xlab = "Estimated cardiovascular risk", ylab = NA, yaxt = "n")
-  abline(v = 0.1, lty = 2, col = "gray")
-  abline(v = 0.2, lty = 2, col = "gray")
-  lines(density(framingham, bw = 0.05, from = 0, to = 1,
-                weights = survey_weight/sum(survey_weight)), col = 1)
-  lines(density(pooled_cohort, bw = 0.05, from = 0, to = 1,
-                weights = survey_weight/sum(survey_weight)), col = 2)
-  lines(density(globorisk, bw = 0.05, from = 0, to = 1,
-                weights = survey_weight/sum(survey_weight)), col = 3)
-  legend("topright", col = 1:3, lty = 1, legend = escores)
-})
+## Figure 1 ----
 
+d_fig1 <- d |> 
+  subset(subset = ok, select = c(names(escores), "survey_weight")) |> 
+  reshape(direction = "long", 
+          varying = list(names(escores)),
+          timevar = "score",
+          times = escores)
+# Make sure the scores show up in the intended order
+d_fig1$score <- ordered(d_fig1$score, escores)
 
+fig1 <- d_fig1 |> 
+  ggplot(aes(x = framingham, # the variable name is picked by reshape()
+             color = score, 
+             weight = survey_weight)) + 
+  geom_vline(xintercept = c(0.1, 0.2), col = "gray25", lty = 2) + 
+  geom_density(bw = 0.05, lwd = 1) +
+  scale_x_continuous(NULL, 
+                     breaks = 0:10/10, minor_breaks = NULL, 
+                     labels = scales::label_percent()) + 
+  scale_y_continuous(NULL, labels = NULL) + 
+  scale_color_manual(name = "Escore", values = palette("Okabe-Ito")) + 
+  theme_light() + 
+  theme(legend.position = c(0.99, 0.99),
+        legend.justification = c(1, 1))
+
+## Others ----
 
 risk_cat_descr$prop |> 
   matrix(nrow = 3, dimnames = list(unique(risk_cat_descr$level), 
@@ -294,3 +308,7 @@ plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight
 # Write output ----
 
 write.csv2(tab1, "tab1.csv", row.names = FALSE, fileEncoding = "UTF-8")
+ggsave(filename = "fig1.png", 
+       plot = fig1 + theme(text = element_text(size = 20)), 
+       width = 1500, height = 1500 / 2, units = "px", 
+       dpi = 96)
