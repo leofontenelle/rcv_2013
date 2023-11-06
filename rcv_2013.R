@@ -13,6 +13,10 @@ library(CVrisk)
 
 source("functions.R")
 
+escores <- c(framingham = "Framingham",
+             pooled_cohort = "Pooled Cohort Equations",
+             globorisk = "Globorisk-LAC")
+
 
 # Read data ----
 
@@ -157,12 +161,11 @@ risk_descr <- (\(d, w) {
    t(sapply(d, weighted.quantile, w = w, probs = c(0, 0.25, 0.5, 0.75, 1.0))),
    mean = sapply(d, weighted.mean, w = w),
    sd = sapply(d, weighted.sd, w = w)
-)}) (d[d$ok, c("framingham", "pooled_cohort", "globorisk")], 
-     d$survey_weight[d$ok])
+)}) (d[d$ok, names(escores)], d$survey_weight[d$ok])
 
 risk_cat_descr <- with(subset(d, ok), {
   res <- list("Framingham" = framingham_cat, 
-              "Pooled Cohorts Equation" = pooled_cohort_cat, 
+              "Pooled Cohort Equations" = pooled_cohort_cat, 
               "Globorisk-LAC" = globorisk_cat) |> 
     lapply(\(x) data.frame(
       level = levels(x),
@@ -181,8 +184,8 @@ d$ratio_fp <- d$framingham / d$pooled_cohort
 d$ratio_pg <- d$pooled_cohort / d$globorisk
 
 agree_cont <- data.frame(
-  A = c("Framingham", "Framingham", "PCE"),
-  B = c("Globorisk-LAC", "PCE", "Globorisk-LAC"),
+  A = escores[c("framingham", "framingham", "pooled_cohort")],
+  B = escores[c("globorisk", "pooled_cohort", "globorisk")],
   A_lower = with(subset(d, ok), 
                  sapply(list(ratio_fg, ratio_fp, ratio_pg), 
                         \(x) weighted.mean(x < (1/1.25), survey_weight))),
@@ -196,8 +199,8 @@ agree_cont <- data.frame(
 )
 
 agree_cat <-  data.frame(
-  A = c("Framingham", "Framingham", "PCE"),
-  B = c("Globorisk-LAC", "PCE", "Globorisk-LAC"),
+  A = agree_cont$A,
+  B = agree_cont$B,
   pa = with(subset(d, ok), 
             list(framingham_cat == globorisk_cat,
                  framingham_cat == pooled_cohort_cat,
@@ -237,9 +240,10 @@ with(subset(d, ok), {
                 weights = survey_weight/sum(survey_weight)), col = 2)
   lines(density(globorisk, bw = 0.05, from = 0, to = 1,
                 weights = survey_weight/sum(survey_weight)), col = 3)
-  legend("topright", col = 1:3, lty = 1,
-         legend = c("Framingham", "Pooled Cohort Equations", "Globorisk-LAC"))
+  legend("topright", col = 1:3, lty = 1, legend = escores)
 })
+
+
 
 risk_cat_descr$prop |> 
   matrix(nrow = 3, dimnames = list(unique(risk_cat_descr$level), 
@@ -280,11 +284,11 @@ plot_categorical_agreement <- function(x, y, weight = 1, xlab = NULL, ylab = NUL
           xlab = xlab, ylab = ylab)
 }
 plot_categorical_agreement(d$globorisk_cat, d$framingham_cat, d$survey_weight, 
-                           "Globorisk-LAC", "Framingham")
+                           escores["globorisk"], escores["framingham"])
 plot_categorical_agreement(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight, 
-                           "Pooled Cohort Equations", "Framingham")
+                           escores["pooled_cohort"], escores["framingham"])
 plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight, 
-                           "Globorisk-LAC", "Pooled Cohort Equations")
+                           escores["globorisk"], escores["pooled_cohort"])
 
 
 # Write output ----
