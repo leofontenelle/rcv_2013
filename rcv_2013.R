@@ -41,11 +41,11 @@ rm(pns2013_lab)
 
 # Framingham: 30 to 74 years of age
 # Pooled Cohort Equations: 40 to 79 years of age
-# Globorisk LAC: 40 to 74 years of age
+# Globorisk-LAC: 40 to 74 years of age
 d$ok_age <- d$age_years |> between(40, 74)
 d$ok_complete <- complete.cases(d)
 d$ok_nocvd <- !d$cvd
-d$ok_notatypical <- # only in Globorisk
+d$ok_notatypical <- # only in Globorisk-LAC
   between(d$bp_sys_mmhg, 70, 270) & 
   between(d$chol_total_mgdl, 67.77, 773.3)
 d$ok <- d$ok_age & d$ok_complete & d$ok_nocvd & d$ok_notatypical
@@ -163,7 +163,7 @@ risk_descr <- (\(d, w) {
 risk_cat_descr <- with(subset(d, ok), {
   res <- list("Framingham" = framingham_cat, 
               "Pooled Cohorts Equation" = pooled_cohort_cat, 
-              "Globorisk" = globorisk_cat) |> 
+              "Globorisk-LAC" = globorisk_cat) |> 
     lapply(\(x) data.frame(
       level = levels(x),
       n = tapply(survey_weight, x, length),
@@ -182,7 +182,7 @@ d$ratio_pg <- d$pooled_cohort / d$globorisk
 
 agree_cont <- data.frame(
   A = c("Framingham", "Framingham", "PCE"),
-  B = c("Globorisk", "PCE", "Globorisk"),
+  B = c("Globorisk-LAC", "PCE", "Globorisk-LAC"),
   A_lower = with(subset(d, ok), 
                  sapply(list(ratio_fg, ratio_fp, ratio_pg), 
                         \(x) weighted.mean(x < (1/1.25), survey_weight))),
@@ -197,7 +197,7 @@ agree_cont <- data.frame(
 
 agree_cat <-  data.frame(
   A = c("Framingham", "Framingham", "PCE"),
-  B = c("Globorisk", "PCE", "Globorisk"),
+  B = c("Globorisk-LAC", "PCE", "Globorisk-LAC"),
   pa = with(subset(d, ok), 
             list(framingham_cat == globorisk_cat,
                  framingham_cat == pooled_cohort_cat,
@@ -238,7 +238,7 @@ with(subset(d, ok), {
   lines(density(globorisk, bw = 0.05, from = 0, to = 1,
                 weights = survey_weight/sum(survey_weight)), col = 3)
   legend("topright", col = 1:3, lty = 1,
-         legend = c("Framingham", "Pooled Cohort Equations", "Globorisk"))
+         legend = c("Framingham", "Pooled Cohort Equations", "Globorisk-LAC"))
 })
 
 risk_cat_descr$prop |> 
@@ -259,9 +259,9 @@ with(subset(d, ok), {
   lines(density(ratio_pg, bw = 0.25, 
                 weights = survey_weight/sum(survey_weight)), col = 3)
   legend("topright", col = 1:3, lty = 1,
-         legend = c("Framingham \uf7 Globorisk", 
+         legend = c("Framingham \uf7 Globorisk-LAC", 
                     "Framingham \uf7 PCE", 
-                    "PCE \uf7 Globorisk"))
+                    "PCE \uf7 Globorisk-LAC"))
 })
 
 plot_categorical_agreement <- function(x, y, weight = 1, xlab = NULL, ylab = NULL) {
@@ -280,11 +280,11 @@ plot_categorical_agreement <- function(x, y, weight = 1, xlab = NULL, ylab = NUL
           xlab = xlab, ylab = ylab)
 }
 plot_categorical_agreement(d$globorisk_cat, d$framingham_cat, d$survey_weight, 
-                           "Globorisk", "Framingham")
+                           "Globorisk-LAC", "Framingham")
 plot_categorical_agreement(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight, 
                            "Pooled Cohort Equations", "Framingham")
 plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight, 
-                           "Globorisk", "Pooled Cohort Equations")
+                           "Globorisk-LAC", "Pooled Cohort Equations")
 
 
 # Write output ----
