@@ -257,6 +257,39 @@ fig1 <- d_fig1 |>
   theme(legend.position = c(0.99, 0.99),
         legend.justification = c(1, 1))
 
+## Figure 2 ----
+
+ratios_fig2 <- c(ratio_fg = "Framingham \uf7 Globorisk-LAC", 
+            ratio_fp = "Framingham \uf7 Pooled Cohort Equations", 
+            ratio_pg = "Pooled Cohort Equations \uf7 Globorisk-LAC")
+d_fig2 <- d |> 
+  subset(subset = ok, select = c(names(ratios_fig2), "survey_weight")) |> 
+  reshape(direction = "long", 
+          varying = list(names(ratios_fig2)),
+          timevar = "ratio",
+          times = ratios_fig2)
+# Make sure the scores show up in the intended order
+d_fig2$ratio <- ordered(d_fig2$ratio, ratios_fig2)
+
+fig2 <- d_fig2 |> 
+  ggplot(aes(x = ratio_fg, # the variable name is picked by reshape()
+             color = ratio, 
+             weight = survey_weight)) + 
+  scale_x_continuous(name = NULL, 
+                     breaks = 1.25/(0.8 ^ (2 * -4:4)),
+                     minor_breaks = NULL,
+                     labels = scales::label_number(0.01, decimal.mark = ","), 
+                     trans = "log") + 
+  scale_y_continuous(NULL, labels = NULL) + 
+  scale_color_brewer(name = "Raz\ue3o", type ="qual", palette = "Dark2") + 
+  geom_rect(inherit.aes = FALSE, data = data.frame(xmin = 0.8, xmax = 1.25, ymin = -0.2, ymax = 1.4), aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), fill = "lightgray") + 
+  geom_vline(xintercept = c(0.8, 1.25), col = "gray25", lty = 2) + 
+  geom_density(bw = 0.1, lwd = 1) +
+  coord_cartesian(ylim = c(0, 1.3)) + 
+  theme_light() + 
+  theme(legend.position = c(0.01, 0.99),
+        legend.justification = c(0, 1))
+
 ## Others ----
 
 risk_cat_descr$prop |> 
@@ -310,5 +343,9 @@ plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight
 write.csv2(tab1, "tab1.csv", row.names = FALSE, fileEncoding = "UTF-8")
 ggsave(filename = "fig1.png", 
        plot = fig1 + theme(text = element_text(size = 20)), 
+       width = 1500, height = 1500 / 2, units = "px", 
+       dpi = 96)
+ggsave(filename = "fig2.png", 
+       plot = fig2 + theme(text = element_text(size = 20)), 
        width = 1500, height = 1500 / 2, units = "px", 
        dpi = 96)
