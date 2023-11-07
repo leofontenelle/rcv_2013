@@ -10,6 +10,7 @@ source("contrib/globorisk.R")
 
 library(PooledCohort)
 library(CVrisk)
+library(gridExtra)
 
 source("functions.R")
 
@@ -290,14 +291,10 @@ fig2 <- d_fig2 |>
   theme(legend.position = c(0.01, 0.99),
         legend.justification = c(0, 1))
 
-## Others ----
+## Figure 3 ----
 
-risk_cat_descr$prop |> 
-  matrix(nrow = 3, dimnames = list(unique(risk_cat_descr$level), 
-                                   unique(risk_cat_descr$score))) |> 
-  barplot()
-
-plot_categorical_agreement <- function(x, y, weight = 1, xlab = NULL, ylab = NULL) {
+# adapted from https://stackoverflow.com/a/19252389
+make_mosaicplot <- function(x, y, weight = 1, xlab, ylab, tag = NULL) {
   stopifnot(is.ordered(x), is.ordered(y))
   stopifnot(length(x) == length(y))
   if (length(weight) != length(x)) {
@@ -306,19 +303,46 @@ plot_categorical_agreement <- function(x, y, weight = 1, xlab = NULL, ylab = NUL
   if (is.null(xlab)) warning("Label for X axis not informed")
   if (is.null(ylab)) warning("Label for Y axis not informed")
   
-  xy <- xtabs(weight ~ y + x)
-  totals <- colSums(xy)
-  barplot(height = xy / rep(totals, each = nrow(xy)), 
-          width = totals, 
-          xlab = xlab, ylab = ylab)
+  d_fig3 <- as.data.frame(xtabs(weight ~ y + x))
+  width <- d_fig3 |> 
+    with(tapply(Freq, x, sum)) |> 
+    prop.table()
+  xmin <- cumsum(c(0, head(width, -1)))
+  xmax <- cumsum(width)
+  d_fig3 <- 
+    cbind(d_fig3,
+          cbind(width, xmin, xmax)[rep(1:nlevels(x), each = nlevels(y)), ])
+  d_fig3 <- within(d_fig3, {
+    height <- tapply(Freq, x, prop.table) |> unlist()
+    ymax <- tapply(height, x, cumsum) |> unlist()
+    ymin <- tapply(ymax, x, \(x) c(0, head(x, -1))) |> unlist()
+  })
+  d_fig3$fill <- ifelse(d_fig3$x == d_fig3$y, "lightgrey", "white")
+  
+  ggplot(d_fig3, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill=fill)) + 
+    geom_rect(color="black") + 
+    scale_fill_identity() +
+    scale_x_continuous(labels = scales::label_percent()) + 
+    scale_y_continuous(labels = scales::label_percent()) + 
+    labs(x = xlab, y = ylab, tag = tag) + 
+    theme_minimal() + 
+    theme(aspect.ratio = 1)
 }
-plot_categorical_agreement(d$globorisk_cat, d$framingham_cat, d$survey_weight, 
-                           escores["globorisk"], escores["framingham"])
-plot_categorical_agreement(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight, 
-                           escores["pooled_cohort"], escores["framingham"])
-plot_categorical_agreement(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight, 
-                           escores["globorisk"], escores["pooled_cohort"])
 
+fig3a <- make_mosaicplot(d$globorisk_cat, d$framingham_cat, d$survey_weight,
+                         escores["globorisk"], escores["framingham"], "A")
+fig3b <- make_mosaicplot(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight,
+                         escores["pooled_cohort"], escores["framingham"], "B")
+fig3c <- make_mosaicplot(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight,
+                         escores["globorisk"], escores["pooled_cohort"], "C")
+
+
+## Others ----
+
+risk_cat_descr$prop |> 
+  matrix(nrow = 3, dimnames = list(unique(risk_cat_descr$level), 
+                                   unique(risk_cat_descr$score))) |> 
+  barplot()
 
 # Write output ----
 
@@ -330,4 +354,23 @@ ggsave(filename = "fig1.png",
 ggsave(filename = "fig2.png", 
        plot = fig2 + theme(text = element_text(size = 20)), 
        width = 1500, height = 1500 / 2, units = "px", 
+       dpi = 96)
+ggsave(filename = "fig3a.png", 
+       plot = fig3a + theme(text = element_text(size = 20)), 
+       width = 1500 / 3, units = "px", 
+       dpi = 96)
+ggsave(filename = "fig3b.png", 
+       plot = fig3b + theme(text = element_text(size = 20)), 
+       width = 1500 / 3, units = "px", 
+       dpi = 96)
+ggsave(filename = "fig3c.png", 
+       plot = fig3c + theme(text = element_text(size = 20)), 
+       width = 1500 / 3, units = "px", 
+       dpi = 96)
+ggsave(filename = "fig3.png",
+       plot = arrangeGrob(fig3a + theme(text = element_text(size = 20)), 
+                          fig3b + theme(text = element_text(size = 20)), 
+                          fig3c + theme(text = element_text(size = 20)),
+                          nrow = 1),
+       width = 1500, units = "px",
        dpi = 96)
