@@ -8,9 +8,11 @@
 load("contrib/sysdata.rda") # coefs, cvdr, rf
 source("contrib/globorisk.R")
 
-library(PooledCohort)
 library(CVrisk)
+library(ggplot2)
 library(gridExtra)
+library(PooledCohort)
+library(scales)
 
 source("functions.R")
 
@@ -251,7 +253,7 @@ fig1 <- d_fig1 |>
   geom_density(bw = 0.05, lwd = 1) +
   scale_x_continuous(NULL, 
                      breaks = 0:10/10, minor_breaks = NULL, 
-                     labels = scales::label_percent()) + 
+                     labels = label_percent()) + 
   scale_y_continuous(NULL, labels = NULL) + 
   scale_color_manual(name = "Escore", values = palette("Okabe-Ito")) + 
   theme_light() + 
@@ -279,7 +281,7 @@ fig2 <- d_fig2 |>
   scale_x_continuous(name = NULL, 
                      breaks = 1.25/(0.8 ^ (2 * -4:4)),
                      minor_breaks = NULL,
-                     labels = scales::label_number(0.01, decimal.mark = ","), 
+                     labels = label_number(0.01, decimal.mark = ","), 
                      trans = "log") + 
   scale_y_continuous(NULL, labels = NULL) + 
   scale_color_brewer(name = "Raz\ue3o", type ="qual", palette = "Dark2") + 
@@ -322,8 +324,8 @@ make_mosaicplot <- function(x, y, weight = 1, xlab, ylab, tag = NULL) {
   ggplot(d_fig3, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill=fill)) + 
     geom_rect(color="black") + 
     scale_fill_identity() +
-    scale_x_continuous(labels = scales::label_percent()) + 
-    scale_y_continuous(labels = scales::label_percent()) + 
+    scale_x_continuous(labels = label_percent()) + 
+    scale_y_continuous(labels = label_percent()) + 
     labs(x = xlab, y = ylab, tag = tag) + 
     theme_minimal() + 
     theme(aspect.ratio = 1)
