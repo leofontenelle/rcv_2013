@@ -16,9 +16,9 @@ library(scales)
 
 source("functions.R")
 
-escores <- c(framingham = "Framingham",
-             pooled_cohort = "Pooled Cohort Equations",
-             globorisk = "Globorisk-LAC")
+scores <- c(framingham = "Framingham",
+            pooled_cohort = "Pooled Cohort Equations",
+            globorisk = "Globorisk-LAC")
 
 
 # Read data ----
@@ -107,14 +107,14 @@ d$globorisk[d$ok] <- with(subset(d, ok), globorisk(
 stopifnot(with(subset(d, ok), all(
   !is.na(framingham) & !is.na(pooled_cohort) & !is.na(globorisk)
 )))
+stopifnot(all(names(scores %in% names(d))))
 
-for (score in c("framingham", "pooled_cohort", "globorisk")) {
-  new_name <- sprintf("%s_cat", score)
-  d[[new_name]] <- d[[score]] |> 
+for (score_name in names(scores)) {
+  new_name <- sprintf("%s_cat", score_name)
+  d[[new_name]] <- d[[score_name]] |> 
     cut(breaks = c(0, 0.1, 0.2, Inf), 
         labels = c("Low", "Intermediate", "High"),
-        right = FALSE, ordered_results = TRUE) |> 
-    ordered() # somehow cut(..., ordered_results = TRUE) is not enough
+        right = FALSE, ordered_result = TRUE)
 }
 
 
@@ -164,7 +164,7 @@ risk_descr <- (\(d, w) {
    t(sapply(d, weighted.quantile, w = w, probs = c(0, 0.25, 0.5, 0.75, 1.0))),
    mean = sapply(d, weighted.mean, w = w),
    sd = sapply(d, weighted.sd, w = w)
-)}) (d[d$ok, names(escores)], d$survey_weight[d$ok])
+)}) (d[d$ok, names(scores)], d$survey_weight[d$ok])
 
 risk_cat_descr <- with(subset(d, ok), {
   res <- list("Framingham" = framingham_cat, 
@@ -187,8 +187,8 @@ d$ratio_fp <- d$framingham / d$pooled_cohort
 d$ratio_pg <- d$pooled_cohort / d$globorisk
 
 agree_cont <- data.frame(
-  A = escores[c("framingham", "framingham", "pooled_cohort")],
-  B = escores[c("globorisk", "pooled_cohort", "globorisk")],
+  A = scores[c("framingham", "framingham", "pooled_cohort")],
+  B = scores[c("globorisk", "pooled_cohort", "globorisk")],
   A_lower = with(subset(d, ok), 
                  sapply(list(ratio_fg, ratio_fp, ratio_pg), 
                         \(x) weighted.mean(x < (1/1.25), survey_weight))),
@@ -237,17 +237,17 @@ tab1 <- sample_descr |>
 ## Figure 1 ----
 
 d_fig1 <- d |> 
-  subset(subset = ok, select = c(names(escores), "survey_weight")) |> 
+  subset(subset = ok, select = c(names(scores), "survey_weight")) |> 
   reshape(direction = "long", 
-          varying = list(names(escores)),
+          varying = list(names(scores)),
           timevar = "score",
-          times = escores)
+          times = scores)
 # Make sure the scores show up in the intended order
-d_fig1$score <- ordered(d_fig1$score, escores)
+d_fig1$score <- ordered(d_fig1$score, scores)
 
 fig1 <- d_fig1 |> 
   ggplot(aes(x = framingham, # the variable name is picked by reshape()
-             color = score, 
+             color = score_name, 
              weight = survey_weight)) + 
   geom_vline(xintercept = c(0.1, 0.2), col = "gray25", lty = 2) + 
   geom_density(bw = 0.05, lwd = 1) +
@@ -332,11 +332,11 @@ make_mosaicplot <- function(x, y, weight = 1, xlab, ylab, tag = NULL) {
 }
 
 fig3a <- make_mosaicplot(d$globorisk_cat, d$framingham_cat, d$survey_weight,
-                         escores["globorisk"], escores["framingham"], "A")
+                         scores["globorisk"], scores["framingham"], "A")
 fig3b <- make_mosaicplot(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight,
-                         escores["pooled_cohort"], escores["framingham"], "B")
+                         scores["pooled_cohort"], scores["framingham"], "B")
 fig3c <- make_mosaicplot(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight,
-                         escores["globorisk"], escores["pooled_cohort"], "C")
+                         scores["globorisk"], scores["pooled_cohort"], "C")
 
 
 ## Others ----
