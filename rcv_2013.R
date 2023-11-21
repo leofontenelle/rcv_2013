@@ -248,7 +248,7 @@ d_fig1$score <- ordered(d_fig1$score, scores)
 
 fig1 <- d_fig1 |> 
   ggplot(aes(x = framingham, # the variable name is picked by reshape()
-             color = score_name, 
+             color = score, 
              weight = survey_weight)) + 
   geom_vline(xintercept = c(0.1, 0.2), col = "gray25", lty = 2) + 
   geom_density(bw = 0.05, lwd = 1) +
