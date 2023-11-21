@@ -20,7 +20,7 @@ source("functions.R")
 scores <- c(framingham = "Framingham",
             pooled_cohort = "Pooled Cohort Equations",
             globorisk = "Globorisk-LAC")
-risk_levels <- c("Low", "Intermediate", "High")
+risk_levels <- c("Baixo", "Intermediário", "Alto")
 
 
 # Read data ----
