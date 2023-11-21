@@ -20,6 +20,7 @@ source("functions.R")
 scores <- c(framingham = "Framingham",
             pooled_cohort = "Pooled Cohort Equations",
             globorisk = "Globorisk-LAC")
+risk_levels <- c("Low", "Intermediate", "High")
 
 
 # Read data ----
@@ -113,8 +114,7 @@ stopifnot(all(names(scores %in% names(d))))
 for (score_name in names(scores)) {
   new_name <- sprintf("%s_cat", score_name)
   d[[new_name]] <- d[[score_name]] |> 
-    cut(breaks = c(0, 0.1, 0.2, Inf), 
-        labels = c("Low", "Intermediate", "High"),
+    cut(breaks = c(0, 0.1, 0.2, Inf), labels = risk_levels,
         right = FALSE, ordered_result = TRUE)
 }
 
@@ -307,8 +307,8 @@ tabulate_fig3 <- function(from, to, weight = 1) {
     as.data.frame() |> 
     transform(fill = to) |> 
     to_lodes_form(res, axes = c("from", "to")) |> 
-    transform(stratum = ordered(stratum, levels = c("Low", "Intermediate", "High")),
-              fill = ordered(fill, levels = c("Low", "Intermediate", "High")))
+    transform(stratum = ordered(stratum, risk_levels),
+              fill = ordered(fill, risk_levels))
 }
 
 plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
