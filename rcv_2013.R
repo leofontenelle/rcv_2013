@@ -9,6 +9,7 @@ load("contrib/sysdata.rda") # coefs, cvdr, rf
 source("contrib/globorisk.R")
 
 library(CVrisk)
+library(ggalluvial)
 library(ggplot2)
 library(gridExtra)
 library(PooledCohort)
@@ -295,56 +296,46 @@ fig2 <- d_fig2 |>
 
 ## Figure 3 ----
 
-# adapted from https://stackoverflow.com/a/19252389
-make_mosaicplot <- function(x, y, weight = 1, xlab, ylab, tag = NULL) {
-  stopifnot(is.ordered(x), is.ordered(y))
-  stopifnot(length(x) == length(y))
-  if (length(weight) != length(x)) {
-    stop("weight must be missing, length 1, or as long as x and y")
+tabulate_fig3 <- function(from, to, weight = 1) {
+  stopifnot(is.ordered(from), is.ordered(to))
+  stopifnot(length(from) == length(to))
+  if (length(weight) != length(from)) {
+    stop("weight must be missing, length 1, or as long as from and to")
   } 
-  if (is.null(xlab)) warning("Label for X axis not informed")
-  if (is.null(ylab)) warning("Label for Y axis not informed")
   
-  d_fig3 <- as.data.frame(xtabs(weight ~ y + x))
-  width <- d_fig3 |> 
-    with(tapply(Freq, x, sum)) |> 
-    prop.table()
-  xmin <- cumsum(c(0, head(width, -1)))
-  xmax <- cumsum(width)
-  d_fig3 <- 
-    cbind(d_fig3,
-          cbind(width, xmin, xmax)[rep(1:nlevels(x), each = nlevels(y)), ])
-  d_fig3 <- within(d_fig3, {
-    height <- tapply(Freq, x, prop.table) |> unlist()
-    ymax <- tapply(height, x, cumsum) |> unlist()
-    ymin <- tapply(ymax, x, \(x) c(0, head(x, -1))) |> unlist()
-  })
-  d_fig3$fill <- ifelse(d_fig3$x == d_fig3$y, "lightgrey", "white")
-  
-  ggplot(d_fig3, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill=fill)) + 
-    geom_rect(color="black") + 
-    scale_fill_identity() +
-    scale_x_continuous(labels = label_percent()) + 
-    scale_y_continuous(labels = label_percent()) + 
-    labs(x = xlab, y = ylab, tag = tag) + 
-    theme_minimal() + 
-    theme(aspect.ratio = 1)
+  xtabs(weight ~ to + from) |> 
+    as.data.frame() |> 
+    transform(fill = to) |> 
+    to_lodes_form(res, axes = c("from", "to")) |> 
+    transform(stratum = ordered(stratum, levels = c("Low", "Intermediate", "High")),
+              fill = ordered(fill, levels = c("Low", "Intermediate", "High")))
 }
 
-fig3a <- make_mosaicplot(d$globorisk_cat, d$framingham_cat, d$survey_weight,
-                         scores["globorisk"], scores["framingham"], "A")
-fig3b <- make_mosaicplot(d$pooled_cohort_cat, d$framingham_cat, d$survey_weight,
-                         scores["pooled_cohort"], scores["framingham"], "B")
-fig3c <- make_mosaicplot(d$globorisk_cat, d$pooled_cohort_cat, d$survey_weight,
-                         scores["globorisk"], scores["pooled_cohort"], "C")
+plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
+  xlabels <-  setNames(c(xlabfrom, xlabto), c("from", "to"))
+  res <- d_fig3 |> 
+    # Reorder levels to make sure "High" is high in "Low" is low
+    transform(fill = factor(fill, rev(levels(fill))), 
+              stratum = factor(stratum, rev(levels(stratum)))) |> 
+    ggplot(aes(x = x, y = Freq, alluvium = alluvium, stratum = stratum)) + 
+    geom_flow(aes(color = stratum, fill = fill), alpha = 0.5) + 
+    geom_stratum(aes(color = stratum, fill = stratum), alpha = 0.5) + 
+    geom_text(aes(label = stratum), stat = "stratum") +
+    scale_x_discrete(labels = xlabels, expand = c(0.15, 0.15)) + 
+    labs(x = NULL, y = NULL, tag = tag) +
+    scale_fill_viridis_d(guide = NULL, option = "E") + 
+    scale_color_viridis_d(guide = NULL, option = "E") + 
+    theme_light()
+  res
+}
 
 
-## Others ----
-
-risk_cat_descr$prop |> 
-  matrix(nrow = 3, dimnames = list(unique(risk_cat_descr$level), 
-                                   unique(risk_cat_descr$score))) |> 
-  barplot()
+fig3a <- tabulate_fig3(d$framingham_cat, d$globorisk_cat, d$survey_weight) |> 
+  plot_fig3(scores["framingham"], scores["globorisk"], tag = "A")
+fig3b <- tabulate_fig3(d$framingham_cat, d$pooled_cohort_cat, d$survey_weight) |> 
+  plot_fig3(scores["framingham"], scores["pooled_cohort"], tag = "B")
+fig3c <- tabulate_fig3(d$pooled_cohort_cat, d$globorisk_cat, d$survey_weight) |> 
+  plot_fig3(scores["pooled_cohort"], scores["globorisk"], tag = "C")
 
 # Write output ----
 
@@ -359,20 +350,20 @@ ggsave(filename = "fig2.png",
        dpi = 96)
 ggsave(filename = "fig3a.png", 
        plot = fig3a + theme(text = element_text(size = 20)), 
-       width = 1500 / 3, units = "px", 
+       width = 1500 / 2, height = 1500 / 2, units = "px", 
        dpi = 96)
 ggsave(filename = "fig3b.png", 
        plot = fig3b + theme(text = element_text(size = 20)), 
-       width = 1500 / 3, units = "px", 
+       width = 1500 / 2, height = 1500 / 2, units = "px", 
        dpi = 96)
 ggsave(filename = "fig3c.png", 
        plot = fig3c + theme(text = element_text(size = 20)), 
-       width = 1500 / 3, units = "px", 
+       width = 1500 / 2, height = 1500 / 2, units = "px", 
        dpi = 96)
 ggsave(filename = "fig3.png",
        plot = arrangeGrob(fig3a + theme(text = element_text(size = 20)), 
                           fig3b + theme(text = element_text(size = 20)), 
                           fig3c + theme(text = element_text(size = 20)),
-                          nrow = 1),
-       width = 1500, units = "px",
+                          nrow = 2, ncol = 2),
+       width = 1500, height = 1500, units = "px",
        dpi = 96)
