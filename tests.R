@@ -48,6 +48,33 @@ stopifnot(with(df_ibm, identical(
 )))
 
 
+# tabulate_fig3() ----
+
+risk_levels <- c("Low", "Intermediate", "High")
+
+d_t3 <- data.frame(
+  from = ordered(sample(risk_levels, 1e3, replace = TRUE)),
+  to = ordered(sample(risk_levels, 1e3, replace = TRUE)),
+  weight = rlnorm(1e3)
+)
+res_t3 <- with(d_t3, tabulate_fig3(from, to, weight))
+
+stopifnot(
+  isTRUE(all.equal(2, sum(res_t3$Freq))),
+  isTRUE(all.equal(1, sum(subset(res_t3, x == "from", select = Freq)))),
+  isTRUE(all.equal(1, sum(subset(res_t3, x == "to", select = Freq))))
+)
+for (column in c("from", "to")) {
+  if (!isTRUE(all.equal(
+    tapply(d_t3$weight, d_t3[[column]], sum)[risk_levels] |> 
+    prop.table(),
+    with(subset(res_t3, x == column),
+         tapply(Freq, stratum, sum))
+  ))) {
+    stop(sprintf("Subtotals don't match in column '%s'", column))
+  }
+}
+
 # weighted.ac1() ----
 
 df_wac1_bg <- irrCAC::cac.ben.gerry

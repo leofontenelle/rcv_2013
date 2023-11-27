@@ -42,6 +42,22 @@ impute_bp_meds <- function(Q001, Q002, Q006) {
   return(res)
 }
 
+tabulate_fig3 <- function(from, to, weight = 1) {
+  stopifnot(is.ordered(from), is.ordered(to))
+  stopifnot(length(from) == length(to))
+  if (length(weight) != length(from)) {
+    stop("weight must be missing, length 1, or as long as from and to")
+  } 
+  
+  xtabs(weight ~ to + from) |> 
+    as.data.frame() |> 
+    transform(Freq = Freq / sum(Freq), 
+              fill = to) |> 
+    to_lodes_form(res, axes = c("from", "to")) |> 
+    transform(stratum = ordered(stratum, risk_levels),
+              fill = ordered(fill, risk_levels))
+}
+
 # Function improved from: https://doi.org/10.5281/zenodo.7121199
 weighted.quantile <- function(x, w = 1, probs = seq(0, 1, 0.25),
                               na.rm = FALSE, names = TRUE) {

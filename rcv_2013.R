@@ -296,23 +296,9 @@ fig2 <- d_fig2 |>
 
 ## Figure 3 ----
 
-tabulate_fig3 <- function(from, to, weight = 1) {
-  stopifnot(is.ordered(from), is.ordered(to))
-  stopifnot(length(from) == length(to))
-  if (length(weight) != length(from)) {
-    stop("weight must be missing, length 1, or as long as from and to")
-  } 
-  
-  xtabs(weight ~ to + from) |> 
-    as.data.frame() |> 
-    transform(fill = to) |> 
-    to_lodes_form(res, axes = c("from", "to")) |> 
-    transform(stratum = ordered(stratum, risk_levels),
-              fill = ordered(fill, risk_levels))
-}
-
 plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
   xlabels <-  setNames(c(xlabfrom, xlabto), c("from", "to"))
+    
   res <- d_fig3 |> 
     # Reorder levels to make sure "High" is high in "Low" is low
     transform(fill = factor(fill, rev(levels(fill))), 
@@ -321,14 +307,14 @@ plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
     geom_flow(aes(color = stratum, fill = fill), alpha = 0.5) + 
     geom_stratum(aes(color = stratum, fill = stratum), alpha = 0.5) + 
     geom_text(aes(label = stratum), stat = "stratum") +
-    scale_x_discrete(labels = xlabels, expand = c(0.15, 0.15)) + 
-    labs(x = NULL, y = NULL, tag = tag) +
+    scale_x_discrete(NULL, labels = xlabels, expand = c(0.15, 0.15)) + 
+    scale_y_continuous(NULL, labels = label_percent(accuracy = 1)) + 
+    labs(tag = tag) +
     scale_fill_viridis_d(guide = NULL, option = "E") + 
     scale_color_viridis_d(guide = NULL, option = "E") + 
     theme_light()
   res
 }
-
 
 fig3a <- tabulate_fig3(d$framingham_cat, d$globorisk_cat, d$survey_weight) |> 
   plot_fig3(scores["framingham"], scores["globorisk"], tag = "A")
