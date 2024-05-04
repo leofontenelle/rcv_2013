@@ -306,15 +306,22 @@ plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
     transform(fill = factor(fill, rev(levels(fill))), 
               stratum = factor(stratum, rev(levels(stratum)))) |> 
     ggplot(aes(x = x, y = Freq, alluvium = alluvium, stratum = stratum)) + 
-    geom_flow(aes(color = stratum, fill = fill), alpha = 0.5) + 
+    geom_flow(aes(color = stratum, fill = fill), alpha = 0.5, lwd = 1) + 
     geom_stratum(aes(color = stratum, fill = stratum), alpha = 0.5) + 
-    geom_text(aes(label = stratum), stat = "stratum") +
-    scale_x_discrete(NULL, labels = xlabels, expand = c(0.15, 0.15)) + 
+    geom_text(aes(label = stratum), stat = "stratum", size = 6) +
+    scale_x_discrete(NULL, labels = xlabels, expand = c(0.1, 0.1)) + 
     scale_y_continuous(NULL, labels = label_percent(accuracy = 1)) + 
     labs(tag = tag) +
     scale_fill_viridis_d(guide = NULL, option = "E") + 
     scale_color_viridis_d(guide = NULL, option = "E") + 
-    theme_light()
+    theme_light() + 
+    # This will raise a warning: "Vectorized input to `element_text()`
+    # is not officially supported." "Results may be unexpected or may 
+    # change in future versions of ggplot2." We are taking the risk
+    # for the sake of fitting larger labels in the horizontal axis and 
+    # and ensuring the readability of the resulting plot.
+    theme(text = element_text(size = 24),
+          axis.text.x = element_text(hjust = c(0.25, 0.75)))
   res
 }
 
@@ -330,28 +337,22 @@ fig3c <- tabulate_fig3(d$pooled_cohort_cat, d$globorisk_cat, d$survey_weight) |>
 write.csv2(tab1, "tab1.csv", row.names = FALSE, fileEncoding = "UTF-8")
 ggsave(filename = "fig1.png", 
        plot = fig1 + theme(text = element_text(size = 20)), 
-       width = 1500, height = 1500 / 2, units = "px", 
-       dpi = 96)
+       width = 4 * 1500, height = 4 * 1500 / 2, units = "px", 
+       dpi = 4 * 96)
 ggsave(filename = "fig2.png", 
        plot = fig2 + theme(text = element_text(size = 20)), 
-       width = 1500, height = 1500 / 2, units = "px", 
-       dpi = 96)
-ggsave(filename = "fig3a.png", 
-       plot = fig3a + theme(text = element_text(size = 20)), 
-       width = 1500 / 2, height = 1500 / 2, units = "px", 
-       dpi = 96)
-ggsave(filename = "fig3b.png", 
-       plot = fig3b + theme(text = element_text(size = 20)), 
-       width = 1500 / 2, height = 1500 / 2, units = "px", 
-       dpi = 96)
-ggsave(filename = "fig3c.png", 
-       plot = fig3c + theme(text = element_text(size = 20)), 
-       width = 1500 / 2, height = 1500 / 2, units = "px", 
-       dpi = 96)
+       width = 4 * 1500, height = 4 * 1500 / 2, units = "px", 
+       dpi = 4 * 96)
+ggsave(filename = "fig3a.png",  plot = fig3a, 
+       width = 4 * 1500 / 2, height = 4 * 1500 / 2, units = "px", 
+       dpi = 4 * 96)
+ggsave(filename = "fig3b.png", plot = fig3b, 
+       width = 4 * 1500 / 2, height = 4 * 1500 / 2, units = "px", 
+       dpi = 4 * 96)
+ggsave(filename = "fig3c.png", plot = fig3c, 
+       width = 4 * 1500 / 2, height = 4 * 1500 / 2, units = "px", 
+       dpi = 4 * 96)
 ggsave(filename = "fig3.png",
-       plot = arrangeGrob(fig3a + theme(text = element_text(size = 20)), 
-                          fig3b + theme(text = element_text(size = 20)), 
-                          fig3c + theme(text = element_text(size = 20)),
-                          nrow = 2, ncol = 2),
-       width = 1500, height = 1500, units = "px",
-       dpi = 96)
+       plot = arrangeGrob(fig3a, fig3b, fig3c, nrow = 2, ncol = 2),
+       width = 4 * 1500, height = 4 * 1500, units = "px",
+       dpi = 4 * 96)
