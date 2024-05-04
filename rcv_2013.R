@@ -22,6 +22,9 @@ scores <- c(framingham = "Framingham",
             globorisk = "Globorisk-LAC")
 risk_levels <- c("Baixo", "Intermediário", "Alto")
 
+old_options <- options(OutDec = ",")
+on.exit(options(old_options))
+
 
 # Read data ----
 
@@ -283,7 +286,7 @@ fig2 <- d_fig2 |>
   scale_x_continuous(name = NULL, 
                      breaks = 1.25/(0.8 ^ (2 * -4:4)),
                      minor_breaks = NULL,
-                     labels = label_number(0.01, decimal.mark = ","), 
+                     labels = label_number(0.01, decimal.mark = getOption("OutDec")), 
                      trans = "log") + 
   scale_y_continuous(NULL, labels = NULL) + 
   scale_color_brewer(name = "Raz\ue3o", type ="qual", palette = "Dark2") + 
@@ -298,9 +301,13 @@ fig2 <- d_fig2 |>
 
 ## Figure 3 ----
 
-plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
+plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag, agree_cat) {
   xlabels <-  setNames(c(xlabfrom, xlabto), c("from", "to"))
-    
+  ac1 <- agree_cat |> 
+    subset(A == xlabfrom & B == xlabto, select = ac1, drop = TRUE) |> 
+    sprintf(fmt = "AC[1] == %.3f")
+  stopifnot(length(ac1) == 1)
+  
   res <- d_fig3 |> 
     # Reorder levels to make sure "High" is high in "Low" is low
     transform(fill = factor(fill, rev(levels(fill))), 
@@ -322,15 +329,17 @@ plot_fig3 <- function(d_fig3, xlabfrom, xlabto, tag) {
     # and ensuring the readability of the resulting plot.
     theme(text = element_text(size = 24),
           axis.text.x = element_text(hjust = c(0.25, 0.75)))
-  res
+  
+  res + annotate(geom = "text", x = 1.5, y = 0.5, 
+                 label = ac1, size = 6, parse = TRUE)
 }
 
 fig3a <- tabulate_fig3(d$framingham_cat, d$globorisk_cat, d$survey_weight) |> 
-  plot_fig3(scores["framingham"], scores["globorisk"], tag = "A")
+  plot_fig3(scores["framingham"], scores["globorisk"], tag = "A", agree_cat)
 fig3b <- tabulate_fig3(d$framingham_cat, d$pooled_cohort_cat, d$survey_weight) |> 
-  plot_fig3(scores["framingham"], scores["pooled_cohort"], tag = "B")
+  plot_fig3(scores["framingham"], scores["pooled_cohort"], tag = "B", agree_cat)
 fig3c <- tabulate_fig3(d$pooled_cohort_cat, d$globorisk_cat, d$survey_weight) |> 
-  plot_fig3(scores["pooled_cohort"], scores["globorisk"], tag = "C")
+  plot_fig3(scores["pooled_cohort"], scores["globorisk"], tag = "C", agree_cat)
 
 # Write output ----
 
