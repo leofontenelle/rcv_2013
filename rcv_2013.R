@@ -258,7 +258,8 @@ fig1 <- d_fig1 |>
   scale_y_continuous(NULL, labels = NULL) + 
   scale_color_manual(name = "Escore", values = palette("Okabe-Ito")) + 
   theme_light() + 
-  theme(legend.position = c(0.99, 0.99),
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.99, 0.99),
         legend.justification = c(1, 1))
 
 ## Figure 2 ----
@@ -291,7 +292,8 @@ fig2 <- d_fig2 |>
   geom_density(bw = 0.1, lwd = 1) +
   coord_cartesian(ylim = c(0, 1.3)) + 
   theme_light() + 
-  theme(legend.position = c(0.01, 0.99),
+  theme(legend.position = "inside", 
+        legend.position.inside = c(0.01, 0.99),
         legend.justification = c(0, 1))
 
 ## Figure 3 ----
