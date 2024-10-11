@@ -77,6 +77,10 @@ for (column in c("from", "to")) {
 
 # weighted.ac1() ----
 
+if (!("irrCAC" %in% installed.packages())) {
+  stop("Testing function weighted.ac1() requires installing package \"irrCAC\"")
+}
+
 df_wac1_bg <- irrCAC::cac.ben.gerry
 # One missing value is "" and somehow made it into the levels list
 df_wac1_bg$Gerry <- factor(df_wac1_bg$Gerry, levels = letters[1:5])

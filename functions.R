@@ -43,6 +43,10 @@ impute_bp_meds <- function(Q001, Q002, Q006) {
 }
 
 tabulate_fig3 <- function(from, to, weight = 1) {
+  if (!("ggalluvial" %in% installed.packages())) {
+    stop("Function tabulate_fig3() requires installing package \"ggalluvial\"")
+  }
+  
   stopifnot(is.ordered(from), is.ordered(to))
   stopifnot(length(from) == length(to))
   if (length(weight) != length(from)) {
@@ -53,7 +57,7 @@ tabulate_fig3 <- function(from, to, weight = 1) {
     as.data.frame() |> 
     transform(Freq = Freq / sum(Freq), 
               fill = to) |> 
-    to_lodes_form(res, axes = c("from", "to")) |> 
+    ggalluvial::to_lodes_form(res, axes = c("from", "to")) |> 
     transform(stratum = ordered(stratum, risk_levels),
               fill = ordered(fill, risk_levels))
 }
