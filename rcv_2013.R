@@ -163,6 +163,14 @@ sample_descr <- with(subset(d, ok), list(
   prop_diabetes = weighted.mean(diabetes, survey_weight)
 ))
 
+# A reviewer asked for medians and interquartile ranges
+sample_quantiles <- lapply(
+  subset(d, ok, c(age_years, chol_total_mgdl, chol_hdl_mgdl, bp_sys_mmhg)),
+  weighted.quantile,
+  w = d$survey_weight[d$ok]
+) |> 
+  do.call(what = rbind)
+
 risk_descr <- (\(d, w) {
   cbind(
    t(sapply(d, weighted.quantile, w = w, probs = c(0, 0.25, 0.5, 0.75, 1.0))),
@@ -224,13 +232,22 @@ agree_cat <-  data.frame(
 
 ## Table 1 ----
 
-tab1 <- sample_descr |> 
-  with(data.frame(
-    Variable = c("Female", "Age (mean, SD)", "Black", "Smoker", 
+var_en_tbl1 <- c("Female sex", "Age (years) (mean, SD)", "Black", "Smoker", 
                  "Total cholesterol (mg/dL) (mean, SD)", 
                  "HDL cholesterol (mg/dL) (mean, SD)",
-                 "Blood pressure (mean, SD)", "Using blood pressure medication",
-                 "Diabetes"),
+                 "Systolic blood pressure (mean, SD)",
+                 "Using blood pressure medication",
+                 "Diabetes")
+var_pt_tbl1 <- c("Sexo feminino", "Idade (anos) (média, DP)",
+                 "Negros", "Fumantes", 
+                 "Colesterol total (mg/dL) (média, DP)", 
+                 "Colesterol HDL (mg/dL) (média, DP)",
+                 "Pressão arterial sistólica (média, DP)",
+                 "Usando anti-hipertensivo",
+                 "Diabetes")
+tab1 <- sample_descr |> 
+  with(data.frame(
+    Variable = var_pt_tbl1,
     n = c(n_female, mean_age, n_black, n_smoke, 
           mean_chol_total, mean_chol_hdl, 
           mean_bp, n_bp_meds, n_diabetes),
@@ -344,14 +361,19 @@ fig3c <- tabulate_fig3(d$pooled_cohort_cat, d$globorisk_cat, d$survey_weight) |>
 # Write output ----
 
 write.csv2(tab1, "tab1.csv", row.names = FALSE, fileEncoding = "UTF-8")
+
+write.csv2(sample_quantiles, "quantiles.csv", row.names = TRUE)
+
 ggsave(filename = "fig1.png", 
        plot = fig1 + theme(text = element_text(size = 20)), 
        width = 4 * 1500, height = 4 * 1500 / 2, units = "px", 
        dpi = 4 * 96)
+
 ggsave(filename = "fig2.png", 
        plot = fig2 + theme(text = element_text(size = 20)), 
        width = 4 * 1500, height = 4 * 1500 / 2, units = "px", 
        dpi = 4 * 96)
+
 ggsave(filename = "fig3a.png",  plot = fig3a, 
        width = 4 * 1500 / 2, height = 4 * 1500 / 2, units = "px", 
        dpi = 4 * 96)

@@ -43,25 +43,6 @@ impute_bp_meds <- function(Q001, Q002, Q006) {
 }
 
 
-#' Format a vector of quantiles as an interquartile range
-#'
-#' @param quantiles output of quantile() or weighted.quantile()
-#' @param OutDec character to use as the decimal mark
-#'
-#' @return a character string
-#'
-iqr <- function(quantiles, OutDec = getOption("OutDec")) {
-  if (!("scales" %in% installed.packages())) {
-    stop("Function iqr() requires installing package \"scales\"")
-  }
-  stopifnot(all(c("25%", "75%") %in% names(quantiles)))
-  range_char <- scales::number(x = quantiles[c("25%", "75%")], 
-                               accuracy = 0.1,
-                               decimal.mark = getOption("OutDec"))
-  paste0("(", range_char[1], "; ", range_char[2], ")")
-}
-
-
 tabulate_fig3 <- function(from, to, weight = 1) {
   if (!("ggalluvial" %in% installed.packages())) {
     stop("Function tabulate_fig3() requires installing package \"ggalluvial\"")
