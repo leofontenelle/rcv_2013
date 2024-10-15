@@ -21,6 +21,28 @@ scores <- c(framingham = "Framingham",
             pooled_cohort = "Pooled Cohort Equations",
             globorisk = "Globorisk-LAC")
 risk_levels <- c("Baixo", "Intermediário", "Alto")
+# risk_levels <- c("Low", "Intermediate", "High")
+risk_breaks <- c(0, 0.1, 0.2, Inf)
+
+## The analyzes can be done with different cutpoints!
+# ACC/AHA 2018/2019
+# risk_levels <- c("Low", "Borderline", "Intermediate", "High")
+# risk_breaks <- c(0, 0.05, 0.075, 0.2, Inf)
+# WHO
+# risk_levels <- c("Low", "Moderate", "High", "Vey High")
+# risk_breaks <- c(0, 0.1, 0.2, 0.3, Inf)
+# 2019 ESC/EAS
+# risk_levels <- c("Green", "Yellow", "Light Red", "Deep Red")
+# risk_breaks <- c(0, 0.03, 0.05, 0.1, Inf) # Fatal
+# risk_breaks <- c(0, 0.1, 0.15, 0.3, Inf) # Fatal + non-fatal
+
+stopifnot(identical(risk_levels, unique(risk_levels)),
+          head(risk_breaks, 1) == 0,
+          tail(risk_breaks, 1) == Inf,
+          all(head(risk_breaks, -1) < 1.0),
+          identical(risk_breaks, unique(risk_breaks)),
+          identical(risk_breaks, sort(risk_breaks)),
+          length(risk_breaks) == (length(risk_levels) + 1))
 
 old_options <- options(OutDec = ",")
 on.exit(options(old_options))
@@ -117,7 +139,7 @@ stopifnot(all(names(scores %in% names(d))))
 for (score_name in names(scores)) {
   new_name <- sprintf("%s_cat", score_name)
   d[[new_name]] <- d[[score_name]] |> 
-    cut(breaks = c(0, 0.1, 0.2, Inf), labels = risk_levels,
+    cut(breaks = risk_breaks, labels = risk_levels,
         right = FALSE, ordered_result = TRUE)
 }
 
